@@ -1,0 +1,29 @@
+[project]
+name = "lab-utils"
+version = "0.1.0"
+description = "Shared research utilities: Lightning Fabric trainer, HF Hub checkpointing, WandB logging"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.0",
+    "lightning>=2.0",
+    "huggingface-hub>=0.20",
+    "wandb>=0.15",
+    "safetensors>=0.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "ruff>=0.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
