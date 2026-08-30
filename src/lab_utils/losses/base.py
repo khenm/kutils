@@ -1,17 +1,18 @@
-import torch
 import torch.nn as nn
 
 
 class LossRegistry:
-    """Registry of named loss functions."""
+    """Registry of named loss functions: `register` adds, `clear` empties
+    (test isolation), `reset` restores the defaults."""
 
-    _registry: dict[str, nn.Module] = {
+    _defaults: dict[str, nn.Module] = {
         "cross_entropy": nn.CrossEntropyLoss(),
         "mse": nn.MSELoss(),
         "l1": nn.L1Loss(),
         "bce": nn.BCEWithLogitsLoss(),
         "cosine_embedding": nn.CosineEmbeddingLoss(),
     }
+    _registry: dict[str, nn.Module] = dict(_defaults)
 
     @classmethod
     def get(cls, name: str) -> nn.Module:
@@ -23,20 +24,12 @@ class LossRegistry:
     def register(cls, name: str, loss: nn.Module) -> None:
         cls._registry[name] = loss
 
+    @classmethod
+    def clear(cls) -> None:
+        """Remove every registered loss."""
+        cls._registry.clear()
 
-class MultiLoss(nn.Module):
-    """Weighted sum of multiple loss functions."""
-
-    def __init__(self, losses: dict[str, tuple[nn.Module, float]]):
-        super().__init__()
-        self.losses = nn.ModuleDict({name: loss for name, (loss, _) in losses.items()})
-        self.weights = {name: weight for name, (_, weight) in losses.items()}
-
-    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, dict[str, float]]:
-        total = torch.tensor(0.0, device=outputs.device)
-        components: dict[str, float] = {}
-        for name in self.losses:
-            value = self.losses[name](outputs, targets) * self.weights[name]
-            total = total + value
-            components[name] = value.item()
-        return total, components
+    @classmethod
+    def reset(cls) -> None:
+        """Restore the default loss set."""
+        cls._registry = dict(cls._defaults)

@@ -1,3 +1,3 @@
-from lab_utils.losses.base import LossRegistry, MultiLoss
+from lab_utils.losses.base import LossRegistry
 
-__all__ = ["LossRegistry", "MultiLoss"]
+__all__ = ["LossRegistry"]

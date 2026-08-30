@@ -1,6 +1,6 @@
 [project]
 name = "lab-utils"
-version = "0.1.0"
+version = "0.4.0"
 description = "Shared research utilities: Lightning Fabric trainer, HF Hub checkpointing, WandB logging"
 requires-python = ">=3.11"
 dependencies = [
@@ -9,6 +9,10 @@ dependencies = [
     "huggingface-hub>=0.20",
     "wandb>=0.15",
     "safetensors>=0.4",
+    "loguru>=0.7",
+    "tqdm>=4.65",
+    "numpy>=1.24",
+    "scipy>=1.10",
 ]
 
 [build-system]
@@ -18,12 +22,41 @@ build-backend = "hatchling.build"
 [project.optional-dependencies]
 dev = [
     "pytest>=7",
+    "pytest-cov>=4",
     "ruff>=0.1",
+    "pyright>=1.1",
 ]
+hf = [
+    "datasets>=2.14",
+]
+backbones = [
+    "transformers>=4.40",
+    "timm>=1.0",
+]
+plotting = [
+    "matplotlib>=3.7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lab_utils"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP"]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RET", "C4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: slow/heavy tests; opt in with RUN_INTEGRATION=1",
+]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.pyright]
+typeCheckingMode = "basic"
+# Optional extras (datasets, matplotlib) aren't installed in the base env.
+reportMissingImports = "warning"

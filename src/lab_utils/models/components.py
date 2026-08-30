@@ -20,12 +20,14 @@ class MLP(nn.Module):
 
         layers = []
         current_dim = in_dim
-        for i in range(num_layers - 1):
-            layers.extend([
-                nn.Linear(current_dim, hidden_dim),
-                activation,
-                nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
-            ])
+        for _ in range(num_layers - 1):
+            layers.extend(
+                [
+                    nn.Linear(current_dim, hidden_dim),
+                    activation,
+                    nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
+                ]
+            )
             current_dim = hidden_dim
         layers.append(nn.Linear(current_dim, out_dim))
 
