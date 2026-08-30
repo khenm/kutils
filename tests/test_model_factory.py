@@ -1,5 +1,7 @@
 """Tests for the model factory: provider -> adapter wiring."""
 
+from typing import Any, cast
+
 import pytest
 import torch
 import torch.nn as nn
@@ -17,7 +19,7 @@ class StubOutput:
 class StubModel(nn.Module):
     def __init__(self, hidden=8):
         super().__init__()
-        self.config = type("Config", (), {"hidden_size": hidden})()
+        self.config = cast(Any, type("Config", (), {"hidden_size": hidden})())
         self._p = nn.Parameter(torch.randn(hidden, hidden))
 
     def forward(self, x, **kwargs):
@@ -29,7 +31,11 @@ def stub_loader(spec):
 
 
 def make_spec(**overrides):
-    fields = {"provider": "stub", "model_id": "stub/model", "family": "text_transformer"}
+    fields: dict[str, Any] = {
+        "provider": "stub",
+        "model_id": "stub/model",
+        "family": "text_transformer",
+    }
     fields.update(overrides)
     return ModelSpec(**fields)
 
@@ -39,7 +45,7 @@ def test_build_model_wires_provider_and_adapter():
     reg.register_provider("stub", stub_loader)
     adapter = build_model(make_spec(), registry=reg)
     assert isinstance(adapter, RepresentationModel)
-    out = adapter.encode_tensor(torch.randint(0, 10, (2, 5)))
+    out = cast(Any, adapter).encode_tensor(torch.randint(0, 10, (2, 5)))
     assert out.global_embedding.shape == (2, 8)
 
 

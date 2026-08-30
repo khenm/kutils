@@ -4,6 +4,8 @@ The backbone is built through the model factory with a stubbed provider, so
 nothing is downloaded and no optional backend is required.
 """
 
+from typing import Any, cast
+
 import pytest
 import torch
 import torch.nn as nn
@@ -21,7 +23,7 @@ class StubOutput:
 class StubBackbone(nn.Module):
     def __init__(self, hidden=8):
         super().__init__()
-        self.config = type("C", (), {"hidden_size": hidden})()
+        self.config = cast(Any, type("C", (), {"hidden_size": hidden})())
         self.encoder = nn.Linear(hidden, hidden)
 
     def forward(self, x, **kwargs):
@@ -33,7 +35,11 @@ def stub_loader(spec):
 
 
 def make_spec(**overrides):
-    fields = {"provider": "stub", "model_id": "stub/backbone", "family": "text_transformer"}
+    fields: dict[str, Any] = {
+        "provider": "stub",
+        "model_id": "stub/backbone",
+        "family": "text_transformer",
+    }
     fields.update(overrides)
     return ModelSpec(**fields)
 

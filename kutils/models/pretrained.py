@@ -3,7 +3,7 @@ with the same checkpointing/HF-Hub behavior as a from-scratch model."""
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
@@ -43,7 +43,7 @@ class PretrainedBackbone(BaseModel):
                 p.requires_grad = False
 
     def _encode(self, x: torch.Tensor) -> torch.Tensor:
-        return self.adapter.encode_tensor(x).global_embedding
+        return cast(Any, self.adapter).encode_tensor(x).global_embedding
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self._encode(x)

@@ -1,3 +1,4 @@
+# pyright: reportUnsupportedDunderAll=false
 """kutils top-level package.
 
 Public names are lazy-loaded (PEP 562 module __getattr__) so that importing

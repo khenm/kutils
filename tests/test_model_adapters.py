@@ -1,5 +1,7 @@
 """Tests for adapter families: backend conventions -> RepresentationOutput."""
 
+from typing import Any, cast
+
 import pytest
 import torch
 import torch.nn as nn
@@ -13,7 +15,7 @@ from kutils.models.schemas import ModelSpec
 
 
 def spec(**overrides):
-    base = {"provider": "stub", "model_id": "stub/model", "modality": "image"}
+    base: dict[str, Any] = {"provider": "stub", "model_id": "stub/model", "modality": "image"}
     base.update(overrides)
     return ModelSpec(**base)
 
@@ -27,7 +29,7 @@ class HFOutput:
 class HFModel(nn.Module):
     def __init__(self, hidden=8, n_layers=3):
         super().__init__()
-        self.config = type("C", (), {"hidden_size": hidden})()
+        self.config = cast(Any, type("C", (), {"hidden_size": hidden})())
         self.n_layers = n_layers
 
     def forward(self, x=None, **kwargs):
@@ -55,7 +57,9 @@ class TimmModel(nn.Module):
 def test_text_transformer_encode_tensor():
     adapter = TextTransformerAdapter(HFModel(), None, spec(modality="text"))
     out = adapter.encode_tensor(torch.randint(0, 10, (2, 5)))
+    assert out.global_embedding is not None
     assert out.global_embedding.shape == (2, 8)
+    assert out.token_embeddings is not None
     assert out.token_embeddings.shape == (2, 5, 8)
 
 
@@ -68,6 +72,7 @@ def test_text_transformer_layer_outputs():
 def test_vision_transformer_timm_style():
     adapter = VisionTransformerAdapter(TimmModel(), None, spec())
     out = adapter.encode_tensor(torch.randn(2, 3, 32, 32))
+    assert out.global_embedding is not None
     assert out.global_embedding.shape == (2, 8)
     assert out.token_embeddings is None
 
@@ -75,22 +80,28 @@ def test_vision_transformer_timm_style():
 def test_vision_transformer_hf_style():
     adapter = VisionTransformerAdapter(HFModel(), None, spec())
     out = adapter.encode_tensor(torch.randn(2, 3, 32, 32))
+    assert out.global_embedding is not None
     assert out.global_embedding.shape == (2, 8)
+    assert out.token_embeddings is not None
     assert out.token_embeddings.shape == (2, 5, 8)
 
 
 def test_cnn_spatial_and_pooled():
     adapter = CNNAdapter(CNNModel(), None, spec())
     out = adapter.encode({"images": torch.randn(2, 3, 32, 32)})
+    assert out.spatial_features is not None
     assert out.spatial_features.shape == (2, 16, 7, 7)
+    assert out.global_embedding is not None
     assert out.global_embedding.shape == (2, 16)
 
 
 def test_multimodal_image_and_text():
     adapter = MultimodalAdapter(CLIPModel(), None, spec(modality="multimodal"))
     img = adapter.encode({"pixel_values": torch.randn(2, 3, 32, 32)})
+    assert img.global_embedding is not None
     assert img.global_embedding.shape == (2, 4)
     txt = adapter.encode({"input_ids": torch.randint(0, 10, (2, 5))})
+    assert txt.global_embedding is not None
     assert txt.global_embedding.shape == (2, 4)
     with pytest.raises(ValueError, match="pixel_values"):
         adapter.encode({"foo": torch.randn(2)})

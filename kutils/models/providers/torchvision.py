@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from kutils.models.schemas import ModelSpec
 
@@ -25,7 +25,7 @@ def load_torchvision(spec: ModelSpec) -> tuple[Any, None]:
 
     weights = None
     if spec.checkpoint and spec.checkpoint.lower() in ("default", "imagenet"):
-        weights = torchvision.models.get_model_weights(spec.model_id).DEFAULT
+        weights = cast(Any, torchvision.models.get_model_weights(spec.model_id)).DEFAULT
     model = torchvision.models.get_model(spec.model_id, weights=weights)
 
     import torch.nn as nn

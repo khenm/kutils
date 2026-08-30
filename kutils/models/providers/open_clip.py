@@ -26,9 +26,10 @@ def load_open_clip(spec: ModelSpec) -> tuple[Any, Any]:
             "package; add it to your own pyproject when you use this provider."
         ) from exc
 
-    model, _, preprocess = open_clip.create_model_and_transforms(
+    model, _, _preprocess = open_clip.create_model_and_transforms(
         spec.model_id, pretrained=spec.checkpoint
     )
+    preprocess: Any = _preprocess  # open_clip stubs type it as Compose; it is callable
 
     def processor(images=None, text=None, return_tensors="pt"):
         out: dict[str, Any] = {}

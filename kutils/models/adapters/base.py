@@ -4,7 +4,7 @@ conventions into `RepresentationOutput`; they never erase structure."""
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import Tensor
@@ -78,13 +78,13 @@ class BaseAdapter:
         return ModelInfo(
             model_id=self.spec.model_id,
             provider=self.spec.provider,
-            architecture=raw.get("architecture"),
+            architecture=cast(str | None, raw.get("architecture")),
             modality=self.spec.modality,
-            objective_class=raw.get("objective_class"),
+            objective_class=cast(str | None, raw.get("objective_class")),
             output=self.spec.output,
             parameter_count=self._count_parameters(),
             embedding_dimension=self._infer_embedding_dimension(raw),
-            pretraining_dataset=raw.get("pretraining_dataset"),
+            pretraining_dataset=cast(str | None, raw.get("pretraining_dataset")),
             checkpoint_id=self.spec.checkpoint,
             revision=self.spec.revision,
             capability_variables=dict(self.spec.capability),

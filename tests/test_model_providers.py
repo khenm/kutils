@@ -9,6 +9,7 @@ a backend happens to be installed. Real-download paths are
 import importlib.util
 import sys
 import types
+from typing import Any, cast
 
 import pytest
 import torch
@@ -46,7 +47,7 @@ class ParamModel(nn.Module):
 @pytest.fixture
 def fake_local_module():
     """A fake importable module hosting the local-provider test models."""
-    module = types.ModuleType(LOCAL_MODULE)
+    module = cast(Any, types.ModuleType(LOCAL_MODULE))
     module.LocalModel = LocalModel
     module.ParamModel = ParamModel
     sys.modules[LOCAL_MODULE] = module
@@ -60,7 +61,7 @@ def _skip_if_installed(name):
 
 
 def spec(**overrides):
-    fields = {"provider": "x", "model_id": "x/model"}
+    fields: dict[str, Any] = {"provider": "x", "model_id": "x/model"}
     fields.update(overrides)
     return ModelSpec(**fields)
 
