@@ -1,11 +1,11 @@
-"""Tests for lab_utils.utils.seed."""
+"""Tests for kutils.utils.seed."""
 
 import random
 
 import numpy as np
 import torch
 
-from lab_utils.utils.seed import capture_rng_state, restore_rng_state, set_seed
+from kutils.utils.seed import capture_rng_state, restore_rng_state, set_seed
 
 
 def test_torch_rng_reproducible():

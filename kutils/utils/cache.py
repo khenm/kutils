@@ -1,26 +1,5 @@
-"""Generic artifact caching.
-
-Save and load arbitrary objects to disk, and memoize expensive computations
-keyed by whatever inputs determine their result. Not tied to metrics, plots,
-or any particular research domain: use it for anything worth computing once
-and reusing later — a distance matrix, a preprocessed split, a fitted
-decomposition, a training-metrics history, a model's intermediate outputs.
-
-Typical use:
-
-    from lab_utils.utils.cache import cached
-
-    def _compute():
-        return expensive_pairwise_distances(embeddings)
-
-    dist = cached(
-        {"dataset": config.dataset_name, "metric": "cosine"},
-        _compute,
-        cache_dir=run_output_dir / "cache",
-        name="pairwise_dist",
-        ext=".npy",
-    )
-"""
+""" "Generic artifact caching: save/load arbitrary objects to disk and
+memoize expensive computations (`save_artifact`/`load_artifact`/`cached`)."""
 
 from __future__ import annotations
 
@@ -37,17 +16,9 @@ SUPPORTED_SUFFIXES = frozenset({".npy", ".npz", ".json", ".pkl"})
 
 
 def fingerprint(*args: Any, **kwargs: Any) -> str:
-    """Short, stable hash of the given inputs.
-
-    Inputs must survive `json.dumps(..., default=str)` — numbers, strings,
-    bools, None, lists/tuples, dicts, and anything with a meaningful
-    `str()` (e.g. Path). Positional-arg order matters; keyword-arg order
-    does not.
-
-    Callers are responsible for including every input that affects the
-    result: an incomplete fingerprint causes a silent, incorrect cache hit
-    later.
-    """
+    """Short, stable hash of the given inputs (JSON-serializable, else
+    `str()`). Include every input that affects the result — an incomplete
+    fingerprint causes a silent, incorrect cache hit."""
     payload = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
@@ -116,20 +87,10 @@ def cached(
     name: str,
     ext: str = ".pkl",
 ) -> Any:
-    """Compute once, reuse forever.
+    """Compute once, reuse forever: on a hit, load `cache_dir/<name>-<digest><ext>`
+    and return without calling `compute_fn`; on a miss, run and cache it. `key`
+    must include everything that determines the result (see `fingerprint`)."""
 
-    `key` is hashed via `fingerprint` into a short digest; the result lives
-    at `cache_dir/<name>-<digest><ext>`. On a hit, the file is loaded and
-    returned without calling `compute_fn`. On a miss, `compute_fn()` runs,
-    its result is saved, and then returned.
-
-    `key` should be everything that determines the result (config values,
-    data identifiers, hyperparameters) — see the warning on `fingerprint`.
-
-    Pick `ext` to match what `compute_fn` returns: ".npy" for a single
-    array, ".npz" for a dict of arrays, ".json" for plain data, ".pkl"
-    (default) for anything else picklable.
-    """
     digest = fingerprint(key)
     path = Path(cache_dir) / f"{name}-{digest}{ext}"
     if path.exists():

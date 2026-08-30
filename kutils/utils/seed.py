@@ -11,24 +11,15 @@ from lightning import seed_everything
 
 
 def set_seed(seed: int) -> None:
-    """Seed Python, NumPy, and PyTorch RNGs (CPU + CUDA) and DataLoader workers.
-
-    Delegates to Lightning's `seed_everything(workers=True)`, which also
-    seeds DataLoader worker processes — the hand-rolled version didn't, so
-    real datasets with randomness (e.g. augmentation) were never fully
-    deterministic. Call once at the top of an entry point, before any
-    model/dataset construction.
-    """
+    """Seed Python/NumPy/PyTorch RNGs (CPU + CUDA) and DataLoader workers,
+    via Lightning's `seed_everything(workers=True)`. Call once at the top of
+    an entry point."""
     seed_everything(seed, workers=True, verbose=False)
 
 
 def capture_rng_state() -> dict[str, Any]:
-    """Capture torch (CPU + per-device CUDA), NumPy, and Python RNG state.
-
-    Returns a plain dict safe for checkpoint storage: numpy state is stored
-    as lists so ``torch.load(weights_only=True)`` can unpickle it. Restore
-    with `restore_rng_state` to continue the exact same stream.
-    """
+    """Capture torch/NumPy/Python RNG state as a checkpoint-safe dict
+    (numpy state as lists, so `weights_only=True` loads work)."""
     state: dict[str, Any] = {
         "torch": torch.get_rng_state(),
         "numpy": _numpy_state_to_dict(np.random.get_state()),
@@ -43,9 +34,8 @@ def capture_rng_state() -> dict[str, Any]:
 
 
 def restore_rng_state(state: dict[str, Any]) -> None:
-    """Restore RNG state captured by `capture_rng_state`. Best-effort per
-    component: a missing entry (e.g. no CUDA on the resuming machine) is
-    skipped, never fatal."""
+    """Restore state from `capture_rng_state`; missing entries (e.g. no
+    CUDA on the resuming machine) are skipped."""
     if "torch" in state:
         torch.set_rng_state(state["torch"])
     if "numpy" in state:

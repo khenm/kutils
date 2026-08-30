@@ -1,9 +1,9 @@
-"""Tests for lab_utils.stats: summarize, bootstrap_ci, permutation_test."""
+"""Tests for kutils.stats: summarize, bootstrap_ci, permutation_test."""
 
 import numpy as np
 import pytest
 
-from lab_utils.stats import bootstrap_ci, permutation_test, summarize
+from kutils.stats import bootstrap_ci, permutation_test, summarize
 
 
 def test_summarize_basic():

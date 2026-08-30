@@ -1,9 +1,9 @@
-"""lab_utils top-level package.
+"""kutils top-level package.
 
 Public names are lazy-loaded (PEP 562 module __getattr__) so that importing
-a lightweight submodule — e.g. `lab_utils.style`, which only needs
+a lightweight submodule — e.g. `kutils.style`, which only needs
 matplotlib/numpy — doesn't force-import torch/lightning via this file.
-Accessing `lab_utils.BaseModel` etc. still works exactly as before; it's
+Accessing `kutils.BaseModel` etc. still works exactly as before; it's
 just resolved on first use instead of at import time.
 """
 
@@ -12,9 +12,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from lab_utils.models.base import BaseModel
-    from lab_utils.stats import bootstrap_ci, permutation_test, summarize
-    from lab_utils.training import (
+    from kutils.models.base import BaseModel
+    from kutils.stats import bootstrap_ci, permutation_test, summarize
+    from kutils.training import (
         FabricTrainer,
         HubPushCallback,
         StandardRecipe,
@@ -33,14 +33,14 @@ __all__ = [
 ]
 
 _LAZY: dict[str, tuple[str, str]] = {
-    "BaseModel": ("lab_utils.models.base", "BaseModel"),
-    "FabricTrainer": ("lab_utils.training", "FabricTrainer"),
-    "HubPushCallback": ("lab_utils.training", "HubPushCallback"),
-    "StandardRecipe": ("lab_utils.training", "StandardRecipe"),
-    "TrainingConfig": ("lab_utils.training", "TrainingConfig"),
-    "bootstrap_ci": ("lab_utils.stats", "bootstrap_ci"),
-    "permutation_test": ("lab_utils.stats", "permutation_test"),
-    "summarize": ("lab_utils.stats", "summarize"),
+    "BaseModel": ("kutils.models.base", "BaseModel"),
+    "FabricTrainer": ("kutils.training", "FabricTrainer"),
+    "HubPushCallback": ("kutils.training", "HubPushCallback"),
+    "StandardRecipe": ("kutils.training", "StandardRecipe"),
+    "TrainingConfig": ("kutils.training", "TrainingConfig"),
+    "bootstrap_ci": ("kutils.stats", "bootstrap_ci"),
+    "permutation_test": ("kutils.stats", "permutation_test"),
+    "summarize": ("kutils.stats", "summarize"),
 }
 
 

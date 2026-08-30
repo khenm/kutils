@@ -6,7 +6,7 @@ import pytest
 matplotlib = pytest.importorskip("matplotlib")
 matplotlib.use("Agg")
 
-from lab_utils.style import (  # noqa: E402 - after importorskip
+from kutils.style import (  # noqa: E402 - after importorskip
     apply_style,
     check_series_encodings,
     diverging_cmap,
@@ -94,7 +94,7 @@ def test_style_helpers_run_against_real_axes():
 def test_savefig_dual(tmp_path):
     import matplotlib.pyplot as plt
 
-    from lab_utils.style import savefig_dual
+    from kutils.style import savefig_dual
 
     fig, ax = plt.subplots()
     ax.plot([0, 1], [0, 1])

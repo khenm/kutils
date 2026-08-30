@@ -1,4 +1,4 @@
-# AGENTS.md — lab-utils conventions
+# AGENTS.md — kutils conventions
 
 Shared utilities consumed by every paper cloned from research-lab.
 
@@ -23,7 +23,7 @@ Shared utilities consumed by every paper cloned from research-lab.
 
 ## Caching
 
-- `lab_utils.utils.cache` is the one place to persist/reload expensive
+- `kutils.utils.cache` is the one place to persist/reload expensive
   artifacts (format by suffix: `.npy`/`.npz`/`.json`/`.pkl`). Don't build
   second, narrower cache helpers.
 - `cached(key, ...)` fingerprints `key`, not the call site — include every
@@ -31,9 +31,9 @@ Shared utilities consumed by every paper cloned from research-lab.
 
 ## Plotting style
 
-`lab_utils.style` is the single source for figure colors and rcParams —
+`kutils.style` is the single source for figure colors and rcParams —
 never hardcode a hex or call `plt.style.use` in a paper script. Optional
-extra (`plotting`); importing `lab_utils` never pulls matplotlib.
+extra (`plotting`); importing `kutils` never pulls matplotlib.
 
 - `apply_style()` — once at script start: fonts, spines, grid, DPI, and the
   `lab_sequential`/`lab_diverging` colormaps. Idempotent.
@@ -45,7 +45,7 @@ extra (`plotting`); importing `lab_utils` never pulls matplotlib.
   it warns when both appear without a distinct marker/linestyle.
 - `style_line_plot`/`style_bar_plot`/`style_heatmap` — per-plot conventions.
 - `savefig_dual(fig, path, cache_data=...)` — writes `.pdf`+`.png`, and
-  optionally caches the data via `lab_utils.utils.cache`.
+  optionally caches the data via `kutils.utils.cache`.
 - Labels use mathtext by default (`apply_style(usetex=False)`); `usetex=True`
   only for custom LaTeX packages. For paper (not figure) math, see
   `research-lab/paper/notation.tex`.

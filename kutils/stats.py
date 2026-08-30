@@ -1,10 +1,5 @@
-"""Run-level statistics: spread summaries, bootstrap CIs, permutation tests.
-
-Thin wrappers around scipy (`bootstrap`, `permutation_test`) so the math is
-maintained upstream. scipy automatically enumerates every relabeling when the
-count is small (exact test, no Monte Carlo noise), matching our old
-hand-written behavior.
-"""
+""" "Run-level statistics: spread summaries, bootstrap CIs, permutation tests
+(scipy-backed)."""
 
 from __future__ import annotations
 
@@ -101,9 +96,7 @@ def permutation_test(
 ) -> PermutationResult:
     """Is the A-vs-B gap distinguishable from seed noise?
 
-    Wraps `scipy.stats.permutation_test` (two-sided, independent groups),
-    which enumerates every relabeling when the count is <= `n_permutations`
-    (exact) and resamples otherwise.
+    `scipy.stats.permutation_test`, exact when the relabeling count is small.
     """
     a = np.asarray(scores_a, dtype=float)
     b = np.asarray(scores_b, dtype=float)

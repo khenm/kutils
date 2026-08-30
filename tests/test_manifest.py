@@ -1,9 +1,9 @@
-"""Tests for lab_utils.utils.manifest."""
+"""Tests for kutils.utils.manifest."""
 
 import json
 import subprocess
 
-from lab_utils.utils.manifest import write_summary
+from kutils.utils.manifest import write_summary
 
 
 def _git(repo, *args):
@@ -98,26 +98,26 @@ def test_write_summary_git_none_outside_repo(tmp_path, monkeypatch):
     assert data["git"] is None
 
 
-def test_write_summary_records_lab_utils_commit_from_uv_lock(tmp_path, monkeypatch):
+def test_write_summary_records_kutils_commit_from_uv_lock(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "uv.lock").write_text(
         "version = 1\n\n"
         "[[package]]\n"
-        'name = "lab-utils"\n'
-        'source = { git = "https://github.com/khenm/lab-utils.git#abc123def456" }\n'
+        'name = "kutils"\n'
+        'source = { git = "https://github.com/khenm/kutils.git#abc123def456" }\n'
     )
     path = write_summary(
         tmp_path / "out", run_name="r", config={}, status="completed", elapsed_seconds=1.0
     )
     data = json.loads(path.read_text())
-    assert data["lab_utils_commit"] == "abc123def456"
+    assert data["kutils_commit"] == "abc123def456"
 
 
-def test_write_summary_lab_utils_commit_none_without_lock(tmp_path, monkeypatch):
+def test_write_summary_kutils_commit_none_without_lock(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path = write_summary(tmp_path, run_name="r", config={}, status="completed", elapsed_seconds=1.0)
     data = json.loads(path.read_text())
-    assert data["lab_utils_commit"] is None
+    assert data["kutils_commit"] is None
 
 
 def test_write_summary_includes_runtime_env(tmp_path, monkeypatch):

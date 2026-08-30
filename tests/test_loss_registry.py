@@ -3,7 +3,7 @@
 import pytest
 import torch.nn as nn
 
-from lab_utils.losses.base import LossRegistry
+from kutils.losses.base import LossRegistry
 
 
 def test_get_default_loss():

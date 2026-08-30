@@ -1,6 +1,6 @@
 [project]
-name = "lab-utils"
-version = "0.4.0"
+name = "kutils"
+version = "0.5.0"
 description = "Shared research utilities: Lightning Fabric trainer, HF Hub checkpointing, WandB logging"
 requires-python = ">=3.11"
 dependencies = [
@@ -38,7 +38,7 @@ plotting = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/lab_utils"]
+packages = ["kutils"]
 
 [tool.ruff]
 line-length = 100

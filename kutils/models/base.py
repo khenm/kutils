@@ -15,12 +15,8 @@ class BaseModel(nn.Module, PyTorchModelHubMixin):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
     def generate_model_card(self, *args, **kwargs):
-        """Default HF model card plus a training-provenance section.
-
-        Signature mirrors the Hugging Face base class exactly. Pass the same
-        dict `write_summary` builds (run_name/config/metrics/git/...); missing
-        keys are skipped, so it degrades gracefully.
-        """
+        """Default HF model card plus a training-provenance section (pass the
+        `write_summary` dict; missing keys are skipped)."""
         card = super().generate_model_card(*args, **kwargs)
         section = _provenance_section(kwargs)
         if section:
@@ -37,8 +33,8 @@ def _provenance_section(kwargs: dict) -> str:
     if commit := git.get("commit"):
         suffix = " (dirty)" if git.get("dirty") else ""
         lines.append(f"- git commit: `{commit[:12]}`{suffix}")
-    if lab_commit := kwargs.get("lab_utils_commit"):
-        lines.append(f"- lab_utils commit: `{lab_commit[:12]}`")
+    if lab_commit := kwargs.get("kutils_commit"):
+        lines.append(f"- kutils commit: `{lab_commit[:12]}`")
     if config := kwargs.get("config"):
         lines.append("- config:")
         lines.extend(f"  - {key}: {value}" for key, value in config.items())

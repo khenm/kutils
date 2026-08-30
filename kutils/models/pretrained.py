@@ -1,15 +1,6 @@
-"""Wrap a pretrained backbone (transformers or timm) as a lab_utils model.
-
-Use this instead of hand-writing a from-scratch architecture when a paper
-fine-tunes or probes an existing pretrained model. `PretrainedBackbone`
-still inherits `save_pretrained`/`from_pretrained`/`push_to_hub` from
-`BaseModel` (via `PyTorchModelHubMixin`), so checkpointing and the
-`FabricTrainer` save/load path work identically to a from-scratch model —
-only the backbone's own weights come from the Hub / timm instead of random
-init.
-
-Requires the optional `backbones` extra: `transformers` and/or `timm`.
-"""
+""" "Pretrained backbone (transformers/timm) plus a task head, with the same
+checkpointing/HF-Hub behavior as a from-scratch model. Requires the
+`backbones` extra."""
 
 from __future__ import annotations
 
@@ -18,30 +9,13 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from lab_utils.models.base import BaseModel
+from kutils.models.base import BaseModel
 
 
 class PretrainedBackbone(BaseModel):
-    """A pretrained encoder (HF `transformers` or `timm`) plus a linear head.
+    """Pretrained encoder (transformers/timm) plus a linear head.
 
-    Args:
-        backbone: "transformers" to load via `AutoModel.from_pretrained`, or
-            "timm" to load via `timm.create_model`.
-        model_name: The Hub / timm model identifier, e.g.
-            "distilbert-base-uncased" or "vit_base_patch16_224.augreg_in21k".
-        output_dim: Size of the task head's output.
-        freeze_backbone: If True, backbone params are frozen (only the head
-            trains) — cheap probing/linear-eval instead of full fine-tuning.
-        pretrained: For the timm backend, whether to load pretrained weights
-            (always True for transformers, which has no random-init mode
-            here).
-
-    Example:
-        >>> model = PretrainedBackbone(
-        ...     backbone="timm", model_name="vit_base_patch16_224.augreg_in21k",
-        ...     output_dim=10, freeze_backbone=True,
-        ... )
-        >>> model.save_pretrained("checkpoints/run/final")  # from BaseModel
+    `freeze_backbone=True` freezes the backbone (probing/linear-eval).
     """
 
     def __init__(

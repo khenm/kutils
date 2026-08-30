@@ -1,10 +1,10 @@
-"""Tests for lab_utils.datasets.utils splits."""
+"""Tests for kutils.datasets.utils splits."""
 
 import pytest
 import torch
 from torch.utils.data import TensorDataset
 
-from lab_utils.datasets.utils import train_val_test_split
+from kutils.datasets.utils import train_val_test_split
 
 
 def _arange_dataset(n=100):

@@ -1,10 +1,5 @@
-"""Generic training loop powered by Lightning Fabric.
-
-`FabricTrainer` owns the loop (setup, iteration, scheduler, logging,
-checkpointing); per-step math lives in a `TrainingRecipe` (`StandardRecipe`
-by default). Papers customize behavior with their own recipe instead of
-forking the trainer.
-"""
+""" "Generic training loop powered by Lightning Fabric; per-step math lives
+in a `TrainingRecipe` (`StandardRecipe` by default)."""
 
 from __future__ import annotations
 
@@ -20,15 +15,15 @@ import torch.nn as nn
 from loguru import logger
 from torch.utils.data import DataLoader
 
-from lab_utils.utils.seed import capture_rng_state, restore_rng_state
+from kutils.utils.seed import capture_rng_state, restore_rng_state
 
 
 @dataclass
 class TrainingConfig:
     """Typed configuration for `FabricTrainer`: how a run executes.
 
-    Loop parameters (`max_epochs`, `log_every`, `save_every_epoch`) are
-    passed to `fit` per run. Build directly or via `from_mapping`.
+    Loop parameters (`max_epochs`, `log_every`, `save_every_epoch`) go to
+    `fit` per run. Build directly or via `from_mapping`.
     """
 
     accelerator: str = "auto"
@@ -72,13 +67,8 @@ class ValidateStepContext:
 
 
 class TrainingRecipe(Protocol):
-    """Per-step logic for the training loop.
-
-    Implementations return per-batch scalar metrics; the trainer
-    mean-aggregates them per epoch. Keys prefixed ``num_`` are summed (for
-    counts), and ``num_correct`` + ``num_total`` derive an ``accuracy``
-    metric.
-    """
+    """Per-step logic; returns per-batch metrics (``num_`` keys are summed,
+    ``num_correct``/``num_total`` derive ``accuracy``)."""
 
     def train_step(self, ctx: TrainStepContext) -> dict[str, torch.Tensor]: ...
 
@@ -86,12 +76,7 @@ class TrainingRecipe(Protocol):
 
 
 class StandardRecipe:
-    """Default recipe: autocast → loss → backward → optimizer step.
-
-    The default for `FabricTrainer.fit`. Subclass or provide your own
-    `TrainingRecipe` to customize per-step behavior (multi-loss, gradient
-    accumulation, EMA, …) without forking the trainer.
-    """
+    """Default recipe: autocast → loss → backward → optimizer step."""
 
     def __init__(self, loss_fn: nn.Module | None = None):
         self.loss_fn = loss_fn or nn.CrossEntropyLoss()
@@ -135,14 +120,8 @@ class CheckpointInfo:
 
 
 class HubPushCallback:
-    """Throttled `push_to_hub` on each checkpoint, via the `on_checkpoint` hook.
-
-    Local checkpointing is cheap and frequent; Hub uploads are not. Pushes at
-    most once per `min_interval_seconds`, regardless of how often checkpoints
-    are written. `summary_fn` (callable returning the run-summary dict, e.g.
-    `build_summary(...)`) is passed as `model_card_kwargs`, so periodic pushes
-    carry the same provenance as the final one.
-    """
+    """Throttled `push_to_hub` (at most once per `min_interval_seconds`);
+    `summary_fn` output is passed as `model_card_kwargs`."""
 
     def __init__(
         self,
@@ -199,11 +178,7 @@ def _aggregate(metrics_list: list[dict[str, torch.Tensor]]) -> dict[str, float]:
 
 
 def _config_to_dict(config: TrainingConfig) -> dict[str, Any]:
-    """Plain, JSON-safe view of a TrainingConfig (for wandb + checkpoints).
-
-    Plain data so `fabric.load`'s default ``weights_only=True`` (torch >= 2.6)
-    can unpickle checkpoints — dataclass instances aren't allowlisted.
-    """
+    """Plain, JSON-safe config (so `weights_only=True` loads keep working)."""
     return {
         "accelerator": config.accelerator,
         "precision": config.precision,
@@ -302,18 +277,10 @@ class FabricTrainer:
     ) -> dict[str, float]:
         """Run the training loop and return the final epoch's metrics.
 
-        `recipe` takes precedence; if None, `StandardRecipe(loss_fn=...)` is
-        used (cross-entropy by default).
-
-        Checkpointing: epoch-boundary saves every `save_every_epoch` epochs
-        (flag `epoch_complete=True`); optionally also time-based mid-epoch
-        saves every `save_every_seconds` (flag `epoch_complete=False`) to
-        `checkpoint_dir/latest`. `on_checkpoint` callbacks fire on every
-        checkpoint written, including the final save. `resume_from` loads a
-        checkpoint and starts at `epoch` (redo) or `epoch + 1` (continue)
-        based on its `epoch_complete` flag, restoring model/optimizer/
-        scheduler/RNG state; the `last_checkpoint.txt` pointer file can be
-        passed directly.
+        Epoch saves (`epoch_complete=True`) continue at `epoch + 1` on
+        resume; time-based saves (`save_every_seconds`) redo their epoch.
+        `on_checkpoint` fires on every save; `resume_from` may be a
+        checkpoint dir or the `last_checkpoint.txt` pointer.
         """
         recipe = recipe or StandardRecipe(loss_fn=loss_fn)
         self._init_wandb()
@@ -489,11 +456,7 @@ class FabricTrainer:
         loader: DataLoader,
         recipe: TrainingRecipe | None = None,
     ) -> dict[str, float]:
-        """One held-out pass over `loader` (e.g. the test set), after training.
-
-        Never called inside `fit` — the held-out set is only evaluated here,
-        at the end, so it can't be iterated on by the training loop.
-        """
+        """One held-out pass over `loader` (e.g. the test set); never in `fit`."""
         recipe = recipe or StandardRecipe()
         return self._run_validate(recipe, model, self.setup_loader(loader), self.current_epoch)
 
@@ -507,12 +470,8 @@ class FabricTrainer:
         scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
         epoch_complete: bool = True,
     ) -> None:
-        """Save model/optimizer/scheduler/RNG state plus `epoch_complete`.
-
-        `epoch_complete` tells `resume_from` whether to continue at
-        `epoch + 1` (True, epoch-boundary save) or redo `epoch` from its
-        start (False, mid-epoch time-based save).
-        """
+        """Save model/optimizer/scheduler/RNG state; `epoch_complete=True`
+        means resume continues at `epoch + 1` (else the epoch is redone)."""
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
 
@@ -545,8 +504,8 @@ class FabricTrainer:
         *,
         scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
     ) -> int:
-        """Load a checkpoint, restoring model/optimizer and (when present)
-        scheduler and RNG state. Returns the checkpoint's epoch."""
+        """Load a checkpoint, restoring model/optimizer (and scheduler/RNG
+        when present). Returns the checkpoint's epoch."""
         path = Path(path)
         state = {
             "model": model,

@@ -1,8 +1,8 @@
-"""Tests for lab_utils.models.base.BaseModel."""
+"""Tests for kutils.models.base.BaseModel."""
 
 import torch.nn as nn
 
-from lab_utils.models.base import BaseModel
+from kutils.models.base import BaseModel
 
 
 class TinyModel(BaseModel):
@@ -21,7 +21,7 @@ def test_generate_model_card_includes_provenance():
         config={"seed": 42, "max_epochs": 10, "dataset_name": "cifar10"},
         metrics={"test_accuracy": 0.9},
         git={"commit": "e116c651d3253c123603e8a73f260f71da127609", "dirty": False},
-        lab_utils_commit="abc123def456",
+        kutils_commit="abc123def456",
     )
     text = card.text
     assert "Training provenance" in text

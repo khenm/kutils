@@ -1,4 +1,4 @@
-# lab-utils
+# kutils
 
 Shared research utilities used across every paper cloned from `research-lab`.
 
@@ -18,33 +18,33 @@ Shared research utilities used across every paper cloned from `research-lab`.
   DataLoader workers) plus `capture_rng_state` / `restore_rng_state` for
   exact resume; every run's manifest (`write_summary`) records config,
   metrics, git revision, and the runtime environment.
-- **Statistics**: `lab_utils.stats` (`summarize`, `bootstrap_ci`,
+- **Statistics**: `kutils.stats` (`summarize`, `bootstrap_ci`,
   `permutation_test` — scipy-backed) for multi-seed results.
 - **Datasets**: `BaseDataset` for from-scratch datasets,
   `train_val_test_split` (fixed test split across runs), and
-  `lab_utils.datasets.hf` (`load_hf_dataset`, `HFDatasetAdapter`) for the
+  `kutils.datasets.hf` (`load_hf_dataset`, `HFDatasetAdapter`) for the
   HuggingFace Hub. Requires the `hf` extra.
-- **Models**: `lab_utils.models.pretrained.PretrainedBackbone` wraps a
+- **Models**: `kutils.models.pretrained.PretrainedBackbone` wraps a
   pretrained `transformers` or `timm` model plus a task head. Requires the
   `backbones` extra.
 - **Losses**: `LossRegistry` for named loss functions (register / clear /
   reset for test isolation).
-- **Logging**: `lab_utils.utils.logging` — structured loguru setup, a
+- **Logging**: `kutils.utils.logging` — structured loguru setup, a
   tqdm-safe wrapper, an `ExperimentState` enum, and a `log_timing` context
   manager.
-- **Caching**: `lab_utils.utils.cache` (`save_artifact` / `load_artifact` /
+- **Caching**: `kutils.utils.cache` (`save_artifact` / `load_artifact` /
   `cached`) for persisting anything expensive to recompute.
-- **Plotting style**: `lab_utils.style` — a CVD-verified color system,
+- **Plotting style**: `kutils.style` — a CVD-verified color system,
   colormaps, and per-plot-type helpers, all in one theme. Requires the
-  `plotting` extra (matplotlib); importing `lab_utils` itself never pulls in
+  `plotting` extra (matplotlib); importing `kutils` itself never pulls in
   matplotlib.
 
 ## Install
 
 ```bash
-pip install lab-utils
+pip install kutils
 # or, for real datasets / pretrained backbones / figures:
-pip install "lab-utils[hf,backbones,plotting]"
+pip install "kutils[hf,backbones,plotting]"
 ```
 
 Type-checked: the wheel ships a PEP 561 `py.typed` marker.

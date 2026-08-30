@@ -1,19 +1,19 @@
-from lab_utils.utils.cache import cached, fingerprint, load_artifact, save_artifact
-from lab_utils.utils.logging import (
+from kutils.utils.cache import cached, fingerprint, load_artifact, save_artifact
+from kutils.utils.logging import (
     ExperimentState,
     get_loguru_safe_tqdm,
     log_config,
     log_timing,
     setup_experiment_logging,
 )
-from lab_utils.utils.manifest import (
+from kutils.utils.manifest import (
     build_summary,
     git_revision,
     locked_dependency_rev,
     runtime_env,
     write_summary,
 )
-from lab_utils.utils.seed import (
+from kutils.utils.seed import (
     capture_rng_state,
     restore_rng_state,
     set_seed,

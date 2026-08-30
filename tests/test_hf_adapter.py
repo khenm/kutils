@@ -1,8 +1,8 @@
-"""Tests for lab_utils.datasets.hf.HFDatasetAdapter (no `datasets` needed)."""
+"""Tests for kutils.datasets.hf.HFDatasetAdapter (no `datasets` needed)."""
 
 import torch
 
-from lab_utils.datasets.hf import HFDatasetAdapter
+from kutils.datasets.hf import HFDatasetAdapter
 
 
 class FakeHFDataset:

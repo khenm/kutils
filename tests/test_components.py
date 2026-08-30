@@ -1,8 +1,8 @@
-"""Tests for lab_utils.models.components (MLP, ResidualBlock)."""
+"""Tests for kutils.models.components (MLP, ResidualBlock)."""
 
 import torch
 
-from lab_utils.models.components import MLP, ResidualBlock
+from kutils.models.components import MLP, ResidualBlock
 
 
 def test_mlp_forward_shape():

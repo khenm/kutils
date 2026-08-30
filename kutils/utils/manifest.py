@@ -1,9 +1,5 @@
-"""Run manifest: summary.json written once per run.
-
-Records config, wall-clock timing, metrics, what code produced the run
-(paper repo git revision + pinned lab-utils commit), and the runtime
-environment (torch/CUDA/cuDNN/driver/image) — all best-effort.
-"""
+""" "Run manifest: summary.json per run — config, timing, metrics, git
+revision, pinned kutils commit, runtime environment (all best-effort)."""
 
 from __future__ import annotations
 
@@ -17,11 +13,8 @@ from typing import Any
 
 
 def runtime_env() -> dict[str, Any]:
-    """Runtime environment: torch/CUDA/cuDNN versions, image tag, GPU driver.
-
-    Best-effort: None for whatever isn't available (no torch, no GPU, no
-    LAB_IMAGE env). Never raises.
-    """
+    """Runtime environment (torch/CUDA/cuDNN, image tag, driver);
+    best-effort, never raises."""
     env: dict[str, Any] = {"image": os.environ.get("LAB_IMAGE")}
     try:
         import torch
@@ -49,9 +42,8 @@ def runtime_env() -> dict[str, Any]:
 def git_revision(directory: Path | None = None) -> dict[str, Any] | None:
     """Git revision of the repo containing `directory` (default: cwd).
 
-    Returns {"commit": <SHA>, "dirty": bool} — dirty means uncommitted
-    changes, which make a bare SHA misleading. None if git is unavailable or
-    not in a repo. Never raises.
+    Returns {"commit", "dirty"} — dirty means uncommitted changes — or None
+    if git is unavailable or not in a repo. Never raises.
     """
     if shutil.which("git") is None:
         return None
@@ -85,7 +77,7 @@ def git_revision(directory: Path | None = None) -> dict[str, Any] | None:
         return None
 
 
-def locked_dependency_rev(directory: Path | None = None, name: str = "lab-utils") -> str | None:
+def locked_dependency_rev(directory: Path | None = None, name: str = "kutils") -> str | None:
     """Pinned git rev of `name` recorded in uv.lock, or None. Never raises."""
     root = directory or Path.cwd()
     lock_path = root / "uv.lock"
@@ -121,7 +113,7 @@ def build_summary(
         "config": config,
         "metrics": metrics or {},
         "git": git_revision(),
-        "lab_utils_commit": locked_dependency_rev(),
+        "kutils_commit": locked_dependency_rev(),
         "env": runtime_env(),
     }
 
@@ -135,22 +127,8 @@ def write_summary(
     elapsed_seconds: float,
     metrics: dict[str, Any] | None = None,
 ) -> Path:
-    """Write (or overwrite) summary.json for a run.
-
-    Args:
-        output_dir: The run's output directory (created if missing).
-        run_name: Resolved run identifier, e.g. "260830-1402-baseline".
-        config: Resolved experiment config as a plain dict.
-        status: "completed" | "failed".
-        elapsed_seconds: Wall-clock time for the run.
-        metrics: Final metrics, if the caller has any.
-
-    Returns:
-        Path to the written summary.json.
-
-    Always includes ``git``, ``lab_utils_commit``, and ``env`` (all
-    best-effort, None when unavailable).
-    """
+    """Write (or overwrite) summary.json for a run; returns its path.
+    Always includes ``git``, ``kutils_commit``, and ``env`` (best-effort)."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 

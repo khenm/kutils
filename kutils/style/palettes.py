@@ -1,10 +1,7 @@
 """Palette access, colormap construction, and safety checks.
 
 Color is assigned by hand, per plot, from ``palette.<family>[<shade>]`` —
-never auto-cycled from ``axes.prop_cycle``. The point is that the same
-series (e.g. "ours-xl") gets the same color across every figure in a paper,
-which an automatic cycle can't guarantee once plots are built in different
-scripts or a series is dropped from one figure.
+never auto-cycled from ``axes.prop_cycle``.
 """
 
 from __future__ import annotations
@@ -14,7 +11,7 @@ from dataclasses import dataclass
 
 from matplotlib.colors import Colormap, LinearSegmentedColormap
 
-from lab_utils.style.tokens import (
+from kutils.style.tokens import (
     CATEGORICAL,
     DIVERGING,
     SEQUENTIAL,
@@ -81,16 +78,8 @@ def check_series_encodings(
     markers: dict[str, object] | None = None,
     linestyles: dict[str, object] | None = None,
 ) -> None:
-    """Warn if two series sharing a known-unsafe family pair (e.g. red/green)
-    are distinguished by color alone in the same figure.
-
-    ``series`` maps a series name to the hex color assigned to it (typically
-    picked from ``palette.<family>[<shade>]``). Pass whichever of ``markers``
-    / ``linestyles`` you're using to encode series in this plot; if a series
-    from each side of an unsafe pair is present and neither mapping gives
-    them distinct values, this warns. Call it once per figure, after you've
-    decided on colors/markers/linestyles and before saving.
-    """
+    """Warn when series from an unsafe family pair (red/green) appear in
+    one figure without a distinct marker/linestyle. Call once per figure."""
     families = {name: palette.family_of(color) for name, color in series.items()}
     for fam_a, fam_b in UNSAFE_FAMILY_PAIRS:
         names_a = [n for n, f in families.items() if f == fam_a]

@@ -1,8 +1,4 @@
-"""Thin HuggingFace Datasets integration.
-
-Load real data from the HuggingFace Hub via `datasets.load_dataset` instead
-of hand-rolled downloaders. Requires the optional `hf` extra (`datasets`).
-"""
+""" "HuggingFace Datasets integration (requires the optional `hf` extra)."""
 
 from __future__ import annotations
 
@@ -21,13 +17,9 @@ def load_hf_dataset(
     streaming: bool = False,
     revision: str | None = None,
 ):
-    """Load a dataset split from the HuggingFace Hub.
-
-    Thin wrapper around `datasets.load_dataset` so callers don't need the
-    import at every call site, and so the signature stays stable if the
-    underlying library's changes.
-    """
-    from datasets import load_dataset
+    """Load a dataset split from the Hub (thin `datasets.load_dataset`
+    wrapper)."""
+    from datasets import load_dataset  # pyright: ignore[reportAttributeAccessIssue]
 
     return load_dataset(
         name,
@@ -40,19 +32,9 @@ def load_hf_dataset(
 
 
 class HFDatasetAdapter(Dataset):
-    """Adapt a HuggingFace `datasets.Dataset` to the torch `Dataset` API.
+    """Adapt a `datasets.Dataset` to the torch `Dataset` API.
 
-    Args:
-        hf_dataset: A `datasets.Dataset` (not a streaming/`IterableDataset`).
-        input_key: Column holding the model input.
-        label_key: Column holding the target label.
-        transform: Optional callable applied to the raw input value before
-            it's turned into a tensor (e.g. a torchvision transform, a
-            tokenizer call).
-
-    Example:
-        >>> ds = load_hf_dataset("cifar10", split="train")
-        >>> train_set = HFDatasetAdapter(ds, input_key="img", label_key="label")
+    `transform` is applied to the raw input value before it becomes a tensor.
     """
 
     def __init__(

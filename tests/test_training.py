@@ -11,8 +11,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-from lab_utils.models.components import MLP
-from lab_utils.training import FabricTrainer, TrainingConfig
+from kutils.models.components import MLP
+from kutils.training import FabricTrainer, TrainingConfig
 
 CPU_CONFIG = {
     "accelerator": "cpu",
@@ -104,7 +104,7 @@ def test_training_config_from_mapping(tmp_path):
 
 
 def test_evaluate_returns_held_out_metrics(tmp_path):
-    from lab_utils.training import StandardRecipe
+    from kutils.training import StandardRecipe
 
     torch.manual_seed(0)
     model = MLP(in_dim=8, hidden_dim=16, out_dim=4)
@@ -170,7 +170,17 @@ def test_checkpoint_epoch_complete_flag(tmp_path):
     assert trainer2._resumed_epoch_complete is False
 
 
-def test_time_based_checkpointing_writes_latest(tmp_path):
+def _fake_monotonic() -> float:
+    """Deterministic time.monotonic (0, 1, 2, ...) so `save_every_seconds`
+    time-based saves always fire, regardless of how fast the epoch runs."""
+    return next(_clock)
+
+
+_clock = __import__("itertools").count()
+
+
+def test_time_based_checkpointing_writes_latest(tmp_path, monkeypatch):
+    monkeypatch.setattr("kutils.training.time.monotonic", _fake_monotonic)
     torch.manual_seed(0)
     model = MLP(in_dim=8, hidden_dim=16, out_dim=4)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -186,16 +196,17 @@ def test_time_based_checkpointing_writes_latest(tmp_path):
         loss_fn=nn.CrossEntropyLoss(),
         log_every=1000,
         save_every_epoch=100,
-        save_every_seconds=0.001,
+        save_every_seconds=1.0,
     )
     latest = tmp_path / "ckpt" / "latest" / "checkpoint.pt"
     assert latest.exists(), "time-based saves must write checkpoint_dir/latest"
     assert not (tmp_path / "ckpt" / "epoch_0000" / "checkpoint.pt").exists()
 
 
-def test_on_checkpoint_callback_fires_for_all_saves(tmp_path):
-    from lab_utils.training import CheckpointInfo
+def test_on_checkpoint_callback_fires_for_all_saves(tmp_path, monkeypatch):
+    from kutils.training import CheckpointInfo
 
+    monkeypatch.setattr("kutils.training.time.monotonic", _fake_monotonic)
     torch.manual_seed(0)
     model = MLP(in_dim=8, hidden_dim=16, out_dim=4)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -212,7 +223,7 @@ def test_on_checkpoint_callback_fires_for_all_saves(tmp_path):
         loss_fn=nn.CrossEntropyLoss(),
         log_every=1000,
         save_every_epoch=1,
-        save_every_seconds=0.001,
+        save_every_seconds=1.0,
         on_checkpoint=[infos.append],
     )
 
@@ -264,7 +275,8 @@ def test_resume_continues_after_complete_epoch(tmp_path):
     assert (tmp_path / "ckpt" / "final" / "checkpoint.pt").exists()
 
 
-def test_resume_redoes_partial_epoch(tmp_path):
+def test_resume_redoes_partial_epoch(tmp_path, monkeypatch):
+    monkeypatch.setattr("kutils.training.time.monotonic", _fake_monotonic)
     torch.manual_seed(0)
     model = MLP(in_dim=8, hidden_dim=16, out_dim=4)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -280,7 +292,7 @@ def test_resume_redoes_partial_epoch(tmp_path):
         loss_fn=nn.CrossEntropyLoss(),
         log_every=1000,
         save_every_epoch=100,
-        save_every_seconds=0.001,
+        save_every_seconds=1.0,
     )
     assert (tmp_path / "ckpt" / "latest" / "checkpoint.pt").exists()
     assert not (tmp_path / "ckpt" / "epoch_0000" / "checkpoint.pt").exists()
@@ -321,7 +333,7 @@ def test_resume_missing_checkpoint_raises(tmp_path):
 def test_hub_push_callback_throttles(monkeypatch, tmp_path):
     from pathlib import Path as _Path
 
-    from lab_utils.training import CheckpointInfo, HubPushCallback
+    from kutils.training import CheckpointInfo, HubPushCallback
 
     class FakeModel:
         def __init__(self):
@@ -331,7 +343,7 @@ def test_hub_push_callback_throttles(monkeypatch, tmp_path):
             self.pushes.append((repo_id, kwargs))
 
     clock = {"t": 0.0}
-    monkeypatch.setattr("lab_utils.training.time.monotonic", lambda: clock["t"])
+    monkeypatch.setattr("kutils.training.time.monotonic", lambda: clock["t"])
 
     model = FakeModel()
     callback = HubPushCallback(

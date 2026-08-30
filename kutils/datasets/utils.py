@@ -9,12 +9,9 @@ def train_val_test_split(
     seed: int = 42,
     test_seed: int = 12345,
 ) -> tuple[Subset, Subset, Subset]:
-    """Split into train/val/test, all in the original dataset's index space.
-
-    The test draw uses the fixed `test_seed`, so the same examples are held
-    out across every run and seed — the point of a test set. Train/val use
-    the run `seed`, so seed noise still affects training data.
-    """
+    """Split into train/val/test (original index space). The test draw uses
+    the fixed `test_seed` (same examples every run); train/val use the run
+    `seed`."""
     n = len(dataset)  # pyright: ignore[reportArgumentType]  # torch Dataset isn't Sized in stubs
     test_size = max(1, int(n * test_ratio))
     val_size = max(1, int(n * val_ratio))

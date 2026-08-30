@@ -2,7 +2,7 @@
 
 import pytest
 
-from lab_utils.losses.base import LossRegistry
+from kutils.losses.base import LossRegistry
 
 
 @pytest.fixture(autouse=True)

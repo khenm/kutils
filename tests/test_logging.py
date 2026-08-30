@@ -1,11 +1,11 @@
-"""Tests for lab_utils.utils.logging."""
+"""Tests for kutils.utils.logging."""
 
 import time
 
 import pytest
 from loguru import logger
 
-from lab_utils.utils.logging import (
+from kutils.utils.logging import (
     ExperimentState,
     get_loguru_safe_tqdm,
     log_config,

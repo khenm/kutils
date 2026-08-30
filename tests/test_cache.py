@@ -1,9 +1,9 @@
-"""Tests for lab_utils.utils.cache."""
+"""Tests for kutils.utils.cache."""
 
 import numpy as np
 import pytest
 
-from lab_utils.utils.cache import (
+from kutils.utils.cache import (
     cached,
     fingerprint,
     load_artifact,

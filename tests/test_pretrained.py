@@ -1,4 +1,4 @@
-"""Tests for lab_utils.models.pretrained.PretrainedBackbone.
+"""Tests for kutils.models.pretrained.PretrainedBackbone.
 
 Backend-dependent tests skip when the optional `backbones` extra
 (transformers/timm) isn't installed; the transformers branch is tested with
@@ -9,7 +9,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from lab_utils.models.pretrained import PretrainedBackbone
+from kutils.models.pretrained import PretrainedBackbone
 
 
 def test_unknown_backbone_raises():
