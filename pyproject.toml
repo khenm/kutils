@@ -1,6 +1,6 @@
 [project]
 name = "kutils"
-version = "0.6.0"
+version = "0.6.1"
 description = "Shared research utilities: Lightning Fabric trainer, HF Hub checkpointing, WandB logging"
 requires-python = ">=3.11"
 dependencies = [

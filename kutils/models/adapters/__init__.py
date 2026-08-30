@@ -3,7 +3,12 @@
 structure — token sequences, spatial maps and pooled embeddings stay
 distinguishable."""
 
-from kutils.models.adapters.base import BaseAdapter, batch_tensor, select_layers
+from kutils.models.adapters.base import (
+    BaseAdapter,
+    HFSequenceAdapter,
+    batch_tensor,
+    select_layers,
+)
 from kutils.models.adapters.cnn import CNNAdapter
 from kutils.models.adapters.custom import CustomAdapter
 from kutils.models.adapters.multimodal import MultimodalAdapter
@@ -14,6 +19,7 @@ __all__ = [
     "BaseAdapter",
     "CNNAdapter",
     "CustomAdapter",
+    "HFSequenceAdapter",
     "MultimodalAdapter",
     "TextTransformerAdapter",
     "VisionTransformerAdapter",

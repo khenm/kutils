@@ -7,6 +7,30 @@ Shared utilities consumed by every paper cloned from research-lab.
 - Only genuinely-shared code lives here; paper code goes in the paper's
   `src/`. The public API is the contract papers compile against.
 
+## Model zoo
+
+- `kutils.models` is a declarative, provider-agnostic model interface:
+  `ModelSpec` (strict TOML, unknown keys raise) → provider loaders
+  (`providers/`) → adapter families (`adapters/`) → one uniform
+  `RepresentationOutput`, wired by `factory.build_model`. Adapters
+  standardize *access* without erasing structure (tokens vs spatial maps vs
+  pooled embeddings stay distinct); pooling/normalization is the
+  experiment's job, never the adapter's.
+- `PretrainedBackbone` builds its backbone through the factory — never
+  re-implement provider logic in training code.
+- `ModelRegistry` (module-level default) is the extension point: papers
+  register providers/adapters via `register_provider` / `register_adapter`;
+  `reset()` restores built-ins. Test isolation via the autouse
+  `isolated_model_registry` fixture (tests/conftest.py).
+- Optional backends (transformers/timm/OpenCLIP/torchvision) are imported
+  lazily inside provider loaders, with an actionable missing-package error —
+  **no extras, no new mandatory deps**. A paper adds the backend package to
+  its own pyproject only when it uses that provider.
+- `ModelInfo` keeps raw capability measures verbatim; derived capability
+  ordering is the experiment's business (never inferred from names).
+- `checkpoints/`: `hash_checkpoint` (sha256) + `load_checkpoint` (strict
+  state-dict loading, torch/safetensors).
+
 ## API & versioning
 
 - 0.x: breaking changes allowed, but each lands with a CHANGELOG entry and a

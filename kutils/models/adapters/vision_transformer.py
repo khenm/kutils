@@ -6,11 +6,11 @@ from typing import Any
 
 from torch import Tensor
 
-from kutils.models.adapters.base import BaseAdapter, select_layers
+from kutils.models.adapters.base import HFSequenceAdapter
 from kutils.models.schemas import RepresentationOutput
 
 
-class VisionTransformerAdapter(BaseAdapter):
+class VisionTransformerAdapter(HFSequenceAdapter):
     """Backend output conventions:
 
     - HF-style: `model(**batch)` -> object with `.last_hidden_state` (and
@@ -29,19 +29,12 @@ class VisionTransformerAdapter(BaseAdapter):
         self, batch: dict[str, Any], layers: list[int] | None = None
     ) -> RepresentationOutput:
         output = self.model(**batch, output_hidden_states=layers is not None)
-        hidden = getattr(output, "last_hidden_state", None)
-        if hidden is not None:
-            return RepresentationOutput(
-                global_embedding=hidden[:, 0],
-                token_embeddings=hidden,
-                layer_outputs=select_layers(getattr(output, "hidden_states", None), layers),
-                metadata={"backend": "huggingface_style"},
-            )
-        return RepresentationOutput(global_embedding=output, metadata={"backend": "timm_style"})
+        if not hasattr(output, "last_hidden_state"):
+            return RepresentationOutput(global_embedding=output, metadata={"backend": "timm_style"})
+        return self._encode_hf(output, layers)
 
     def encode_tensor(self, x: Tensor) -> RepresentationOutput:
         output = self.model(x)
-        hidden = getattr(output, "last_hidden_state", None)
-        if hidden is not None:
-            return RepresentationOutput(global_embedding=hidden[:, 0], token_embeddings=hidden)
-        return RepresentationOutput(global_embedding=output)
+        if not hasattr(output, "last_hidden_state"):
+            return RepresentationOutput(global_embedding=output)
+        return self._encode_hf(output, None)

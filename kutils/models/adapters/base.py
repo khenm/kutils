@@ -109,3 +109,30 @@ class BaseAdapter:
         if isinstance(num_features, int):
             return num_features
         return None
+
+
+class HFSequenceAdapter(BaseAdapter):
+    """HF-style encoder path shared by the vision/text transformer adapters.
+
+    Convention: `model(**batch)` (or `model(x)` on the raw-tensor path)
+    returns an object with `.last_hidden_state` (plus `.hidden_states` when
+    requested); the global embedding is the first token. Subclasses only
+    provide the `preprocess` convention (images vs text)."""
+
+    def encode(
+        self, batch: dict[str, Any], layers: list[int] | None = None
+    ) -> RepresentationOutput:
+        output = self.model(**batch, output_hidden_states=layers is not None)
+        return self._encode_hf(output, layers)
+
+    def encode_tensor(self, x: Tensor) -> RepresentationOutput:
+        output = self.model(x)
+        return self._encode_hf(output, None)
+
+    def _encode_hf(self, output: Any, layers: list[int] | None) -> RepresentationOutput:
+        hidden = output.last_hidden_state
+        return RepresentationOutput(
+            global_embedding=hidden[:, 0],
+            token_embeddings=hidden,
+            layer_outputs=select_layers(getattr(output, "hidden_states", None), layers),
+        )

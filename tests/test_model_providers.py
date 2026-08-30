@@ -22,6 +22,37 @@ from kutils.models.providers.torchvision import load_torchvision
 from kutils.models.registry import get_model_registry
 from kutils.models.schemas import ModelSpec
 
+LOCAL_MODULE = "kutils_test_local_models"
+
+
+class LocalModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(4, 2)
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+class ParamModel(nn.Module):
+    def __init__(self, dim: int = 4):
+        super().__init__()
+        self.fc = nn.Linear(dim, 2)
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+@pytest.fixture
+def fake_local_module():
+    """A fake importable module hosting the local-provider test models."""
+    module = types.ModuleType(LOCAL_MODULE)
+    module.LocalModel = LocalModel
+    module.ParamModel = ParamModel
+    sys.modules[LOCAL_MODULE] = module
+    yield module
+    del sys.modules[LOCAL_MODULE]
+
 
 def _skip_if_installed(name):
     if importlib.util.find_spec(name) is not None:
@@ -69,34 +100,53 @@ def test_local_requires_architecture():
         load_local(spec(provider="local"))
 
 
-def test_local_loads_checkpoint(tmp_path):
-    module = types.ModuleType("kutils_test_local_model")
+def test_local_loads_checkpoint(tmp_path, fake_local_module):
+    path = tmp_path / "model.pt"
+    torch.save(LocalModel().state_dict(), path)
+    s = ModelSpec(
+        provider="local",
+        model_id="x",
+        checkpoint=str(path),
+        capability={"architecture": f"{LOCAL_MODULE}:LocalModel"},
+    )
+    model, processor = load_local(s)
+    assert processor is None
+    assert isinstance(model, LocalModel)
+    assert model(torch.randn(1, 4)).shape == (1, 2)
 
-    class LocalModel(nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.fc = nn.Linear(4, 2)
 
-        def forward(self, x):
-            return self.fc(x)
+def test_local_forwards_constructor_kwargs(fake_local_module):
+    s = ModelSpec(
+        provider="local",
+        model_id="x",
+        capability={"architecture": f"{LOCAL_MODULE}:ParamModel", "dim": 6},
+    )
+    model, _ = load_local(s)
+    assert model(torch.randn(1, 6)).shape == (1, 2)
 
-    module.LocalModel = LocalModel
-    sys.modules["kutils_test_local_model"] = module
-    try:
-        path = tmp_path / "model.pt"
-        torch.save(LocalModel().state_dict(), path)
-        s = ModelSpec(
-            provider="local",
-            model_id="x",
-            checkpoint=str(path),
-            capability={"architecture": "kutils_test_local_model:LocalModel"},
-        )
-        model, processor = load_local(s)
-        assert processor is None
-        assert isinstance(model, LocalModel)
-        assert model(torch.randn(1, 4)).shape == (1, 2)
-    finally:
-        del sys.modules["kutils_test_local_model"]
+
+def test_local_reserved_keys_not_forwarded(fake_local_module):
+    s = ModelSpec(
+        provider="local",
+        model_id="x",
+        capability={
+            "architecture": f"{LOCAL_MODULE}:ParamModel",
+            "depth": 12,
+            "freeze_backbone": True,
+        },
+    )
+    model, _ = load_local(s)
+    assert model.fc.in_features == 4  # default dim; reserved keys ignored
+
+
+def test_local_rejected_kwargs_raise(fake_local_module):
+    s = ModelSpec(
+        provider="local",
+        model_id="x",
+        capability={"architecture": f"{LOCAL_MODULE}:ParamModel", "nope": 1},
+    )
+    with pytest.raises(ValueError, match="rejected constructor kwargs"):
+        load_local(s)
 
 
 @pytest.mark.integration

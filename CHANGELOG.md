@@ -3,6 +3,23 @@
 All notable changes to kutils are documented here. Follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.1] - 2026-08-30
+
+### Changed
+
+- `load_local` now forwards `capability` entries (minus reserved metadata
+  keys: `architecture`, `depth`, `width`, `parameters`, ...) to the model
+  constructor as keyword arguments — parametrized local architectures no
+  longer need a paper-side provider.
+- HF-style `encode`/`encode_tensor` extracted from the vision/text
+  transformer adapters into a shared `HFSequenceAdapter` base
+  (`kutils.models.adapters.base`); the vision adapter keeps its timm-style
+  fallback.
+
+### Added
+
+- `kutils/AGENTS.md` documents the model zoo.
+
 ## [0.6.0] - 2026-08-30
 
 ### Added
