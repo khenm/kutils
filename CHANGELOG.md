@@ -3,6 +3,40 @@
 All notable changes to kutils are documented here. Follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] - 2026-08-30
+
+### Added
+
+- Model zoo: `kutils.models` now provides a declarative, provider-agnostic
+  model interface:
+  - `schemas.py`: `ModelSpec` (strict TOML spec files — unknown keys raise),
+    `ModelInfo` (scientific metadata with raw capability variables kept
+    verbatim), `RepresentationOutput` (uniform adapter output; global/token/
+    spatial/logits/layer outputs stay structurally distinct), and the
+    `RepresentationModel` protocol (`preprocess` / `encode` / `model_info`).
+  - `registry.py`: `ModelRegistry` with `register_provider` /
+    `register_adapter` / `reset` (LossRegistry-style test isolation), a
+    module-level default registry, and built-in adapter families.
+  - `factory.py`: `build_model(spec)` wires a provider loader to an adapter;
+    it contains no experimental logic.
+  - `adapters/`: base + families (vision transformer, text transformer,
+    multimodal, CNN, custom) that translate backend output conventions into
+    `RepresentationOutput` without erasing structure.
+  - `checkpoints/`: `hash_checkpoint` (chunked sha256) and `load_checkpoint`
+    (torch or safetensors state dicts with strict key validation).
+  - Optional backends (transformers/timm/OpenCLIP/torchvision) are imported
+    lazily by their provider loaders — no new extras, no new mandatory
+    dependencies.
+
+### Changed
+
+- **Breaking**: `PretrainedBackbone` now takes a `ModelSpec`
+  (`PretrainedBackbone(model_spec, output_dim, freeze_backbone=False)`)
+  instead of `backbone`/`model_name` strings. The backbone is constructed
+  through the model factory (provider loader + adapter), removing the
+  inline transformers/timm switch; head, freeze, checkpointing and Hub
+  behavior are unchanged.
+
 ## [0.5.0] - 2026-08-30
 
 ### Changed

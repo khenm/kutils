@@ -13,6 +13,13 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from kutils.models.base import BaseModel
+    from kutils.models.registry import ModelRegistry
+    from kutils.models.schemas import (
+        ModelInfo,
+        ModelSpec,
+        RepresentationModel,
+        RepresentationOutput,
+    )
     from kutils.stats import bootstrap_ci, permutation_test, summarize
     from kutils.training import (
         FabricTrainer,
@@ -25,10 +32,19 @@ __all__ = [
     "BaseModel",
     "FabricTrainer",
     "HubPushCallback",
+    "ModelInfo",
+    "ModelRegistry",
+    "ModelSpec",
+    "PretrainedBackbone",
+    "RepresentationModel",
+    "RepresentationOutput",
     "StandardRecipe",
     "TrainingConfig",
     "bootstrap_ci",
+    "build_model",
     "permutation_test",
+    "register_adapter",
+    "register_provider",
     "summarize",
 ]
 
@@ -36,10 +52,19 @@ _LAZY: dict[str, tuple[str, str]] = {
     "BaseModel": ("kutils.models.base", "BaseModel"),
     "FabricTrainer": ("kutils.training", "FabricTrainer"),
     "HubPushCallback": ("kutils.training", "HubPushCallback"),
+    "ModelInfo": ("kutils.models.schemas", "ModelInfo"),
+    "ModelRegistry": ("kutils.models.registry", "ModelRegistry"),
+    "ModelSpec": ("kutils.models.schemas", "ModelSpec"),
+    "PretrainedBackbone": ("kutils.models.pretrained", "PretrainedBackbone"),
+    "RepresentationModel": ("kutils.models.schemas", "RepresentationModel"),
+    "RepresentationOutput": ("kutils.models.schemas", "RepresentationOutput"),
     "StandardRecipe": ("kutils.training", "StandardRecipe"),
     "TrainingConfig": ("kutils.training", "TrainingConfig"),
     "bootstrap_ci": ("kutils.stats", "bootstrap_ci"),
+    "build_model": ("kutils.models.factory", "build_model"),
     "permutation_test": ("kutils.stats", "permutation_test"),
+    "register_adapter": ("kutils.models.registry", "register_adapter"),
+    "register_provider": ("kutils.models.registry", "register_provider"),
     "summarize": ("kutils.stats", "summarize"),
 }
 

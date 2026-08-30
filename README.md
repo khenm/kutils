@@ -24,9 +24,15 @@ Shared research utilities used across every paper cloned from `research-lab`.
   `train_val_test_split` (fixed test split across runs), and
   `kutils.datasets.hf` (`load_hf_dataset`, `HFDatasetAdapter`) for the
   HuggingFace Hub. Requires the `hf` extra.
-- **Models**: `kutils.models.pretrained.PretrainedBackbone` wraps a
-  pretrained `transformers` or `timm` model plus a task head. Requires the
-  `backbones` extra.
+- **Models**: a declarative model zoo — one `ModelSpec` TOML file per model
+  (`provider` = how to build, `model_id` = which model, `output` = how it
+  will be used), built through a registry + factory and wrapped in an
+  adapter that returns one uniform `RepresentationOutput`
+  (`kutils.models.{schemas,registry,factory,adapters,checkpoints}`).
+  `PretrainedBackbone` wraps a factory-built backbone plus a task head.
+  Optional backends (transformers/timm/OpenCLIP/torchvision) are imported
+  lazily by their provider loaders; the `backbones` extra is only needed
+  when a provider actually uses it.
 - **Losses**: `LossRegistry` for named loss functions (register / clear /
   reset for test isolation).
 - **Logging**: `kutils.utils.logging` — structured loguru setup, a
