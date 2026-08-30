@@ -14,7 +14,6 @@ _FAMILY_BY_PROVIDER: dict[str, str] = {
     "torchvision": "cnn",
     "open_clip": "multimodal",
     "local": "custom",
-    "custom": "custom",
 }
 
 

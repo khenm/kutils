@@ -170,6 +170,28 @@ def test_checkpoint_epoch_complete_flag(tmp_path):
     assert trainer2._resumed_epoch_complete is False
 
 
+def test_pretrained_only_checkpoint_updates_existing_model(tmp_path):
+    class PretrainedModel(nn.Linear):
+        @classmethod
+        def from_pretrained(cls, path):
+            loaded = cls(2, 1, bias=False)
+            loaded.weight.data.fill_(3.0)
+            return loaded
+
+    path = tmp_path / "ckpt" / "pretrained"
+    path.mkdir(parents=True)
+    model = PretrainedModel(2, 1, bias=False)
+    model.weight.data.zero_()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+    trainer = _make_trainer(tmp_path)
+
+    epoch, epoch_complete = trainer._restore_checkpoint(path, model, optimizer, None)
+
+    assert epoch == 0
+    assert epoch_complete is True
+    assert torch.equal(model.weight, torch.full_like(model.weight, 3.0))
+
+
 def _fake_monotonic() -> float:
     """Deterministic time.monotonic (0, 1, 2, ...) so `save_every_seconds`
     time-based saves always fire, regardless of how fast the epoch runs."""
@@ -449,3 +471,75 @@ def test_nonfinite_loss_raises_immediately(tmp_path):
             log_every=1000,
             save_every_epoch=100,
         )
+
+
+def test_task_recipe_fit_dispatches_by_task(tmp_path):
+    """TaskRecipe: step-based fit over Batch-like batches dispatches the
+    loss by batch.task_id."""
+    from torch.utils.data import IterableDataset
+
+    from kutils.training import TaskRecipe
+
+    used: list[str] = []
+
+    class SpyLoss(nn.Module):
+        def __init__(self, name):
+            super().__init__()
+            self.name = name
+
+        def forward(self, logits, targets):
+            used.append(self.name)
+            return nn.functional.cross_entropy(logits, targets)
+
+    class FakeBatch:
+        def __init__(self, x, y, task_id):
+            self.inputs = {"x": x}
+            self.targets = {"y": y}
+            self.task_id = task_id
+
+    class BatchStream(IterableDataset):
+        def __iter__(self):
+            for i in range(4):
+                x = torch.randn(4, 8)
+                y = torch.randint(0, 4, (4,))
+                yield FakeBatch(x, y, task_id=("a" if i % 2 == 0 else "b"))
+
+    model, optimizer = _make_model_optimizer()
+    trainer = _make_trainer(tmp_path)
+    loader = DataLoader(BatchStream(), batch_size=None)
+    recipe = TaskRecipe({"a": SpyLoss("a"), "b": SpyLoss("b")})
+
+    metrics = trainer.fit(model, optimizer, loader, max_epochs=1, recipe=recipe, log_every=1)
+
+    assert "loss" in metrics, "step-based fit must return metrics"
+    assert sorted(set(used)) == ["a", "b"], "both tasks must be dispatched by task_id"
+
+
+def test_task_recipe_rejects_non_batch():
+    from kutils.training import TaskRecipe
+
+    recipe = TaskRecipe({"a": nn.CrossEntropyLoss()})
+    with pytest.raises(TypeError, match="inputs/targets/task_id"):
+        recipe._unpack(
+            (torch.randn(4, 8), torch.randint(0, 4, (4,))),
+            fabric=object(),  # never reached: the shape check raises first
+        )
+
+
+def test_task_recipe_custom_keys():
+    from kutils.training import TaskRecipe
+
+    class CustomBatch:
+        def __init__(self):
+            self.inputs = {"img": torch.randn(4, 8)}
+            self.targets = {"cls": torch.randint(0, 4, (4,))}
+            self.task_id = "a"
+
+    class FakeFabric:
+        device = torch.device("cpu")
+
+    recipe = TaskRecipe({"a": nn.CrossEntropyLoss()}, input_key="img", target_key="cls")
+    x, y, batch = recipe._unpack(CustomBatch(), FakeFabric())
+    assert x.shape == (4, 8)
+    assert y.shape == (4,)
+    assert batch.task_id == "a"

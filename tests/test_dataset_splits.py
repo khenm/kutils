@@ -38,3 +38,16 @@ def test_train_split_varies_with_seed():
 def test_too_small_dataset_raises():
     with pytest.raises(ValueError):
         train_val_test_split(_arange_dataset(2), val_ratio=0.5, test_ratio=0.5)
+
+
+@pytest.mark.parametrize(
+    ("val_ratio", "test_ratio", "expected_lengths"),
+    [
+        (0.0, 0.1, (90, 0, 10)),
+        (0.1, 0.0, (90, 10, 0)),
+        (0.0, 0.0, (100, 0, 0)),
+    ],
+)
+def test_zero_ratio_does_not_remove_samples(val_ratio, test_ratio, expected_lengths):
+    splits = train_val_test_split(_arange_dataset(100), val_ratio=val_ratio, test_ratio=test_ratio)
+    assert tuple(map(len, splits)) == expected_lengths

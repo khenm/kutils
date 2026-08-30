@@ -4,7 +4,7 @@ in a `TrainingRecipe` (`StandardRecipe` by default)."""
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, cast
@@ -100,6 +100,66 @@ class StandardRecipe:
         with ctx.fabric.autocast():
             logits = ctx.model(x)
             loss = self.loss_fn(logits, y)
+        preds = logits.argmax(dim=1)
+        return {
+            "loss": loss.detach(),
+            "num_correct": (preds == y).sum().float(),
+            "num_total": torch.tensor(float(y.size(0))),
+        }
+
+
+class TaskRecipe(StandardRecipe):
+    """Recipe for homogeneous task batches in mixture training.
+
+    Batches carry dict ``inputs`` / ``targets`` plus a ``task_id`` (the
+    pattern's `Batch`): forward on ``inputs[input_key]``, loss from
+    ``loss_by_task[batch.task_id]`` applied to ``targets[target_key]``.
+    The step-based mixture loop runs `FabricTrainer.fit(max_epochs=1)`
+    over a finite ``max_steps`` stream of such batches — see the
+    research-lab data layer (`src.data.samplers.mixture`).
+    """
+
+    def __init__(
+        self,
+        loss_by_task: Mapping[str, nn.Module],
+        *,
+        input_key: str = "x",
+        target_key: str = "y",
+    ):
+        super().__init__()
+        self.loss_by_task = dict(loss_by_task)
+        self.input_key = input_key
+        self.target_key = target_key
+
+    def _unpack(self, batch: Any, fabric: Any) -> tuple[torch.Tensor, torch.Tensor, Any]:
+        if not (
+            hasattr(batch, "inputs") and hasattr(batch, "targets") and hasattr(batch, "task_id")
+        ):
+            raise TypeError(
+                "TaskRecipe expects batches with inputs/targets/task_id "
+                f"(e.g. a Batch dataclass), got {type(batch).__name__}"
+            )
+        x = batch.inputs[self.input_key].to(fabric.device)
+        y = batch.targets[self.target_key].to(fabric.device)
+        return x, y, batch
+
+    def train_step(self, ctx: TrainStepContext) -> dict[str, torch.Tensor]:
+        x, y, batch = self._unpack(ctx.batch, ctx.fabric)
+        loss_fn = self.loss_by_task[batch.task_id]
+        with ctx.fabric.autocast():
+            logits = ctx.model(x)
+            loss = loss_fn(logits, y)
+        ctx.fabric.backward(loss)
+        ctx.optimizer.step()
+        ctx.optimizer.zero_grad()
+        return {"loss": loss.detach()}
+
+    def validate_step(self, ctx: ValidateStepContext) -> dict[str, torch.Tensor]:
+        x, y, batch = self._unpack(ctx.batch, ctx.fabric)
+        loss_fn = self.loss_by_task[batch.task_id]
+        with ctx.fabric.autocast():
+            logits = ctx.model(x)
+            loss = loss_fn(logits, y)
         preds = logits.argmax(dim=1)
         return {
             "loss": loss.detach(),
@@ -514,7 +574,8 @@ class FabricTrainer:
         checkpoint_path = path / "checkpoint.pt"
 
         if hasattr(model, "from_pretrained") and not checkpoint_path.exists():
-            model = cast(Any, model).from_pretrained(str(path))
+            loaded_model = cast(Any, model).from_pretrained(str(path))
+            model.load_state_dict(loaded_model.state_dict())
             self._resumed_epoch_complete = True
             return 0
 
@@ -542,7 +603,7 @@ class FabricTrainer:
             if not resolved:
                 raise FileNotFoundError(f"resume_from: pointer file is empty at {path}")
             path = Path(resolved)
-        if not (path / "checkpoint.pt").exists():
+        if not (path / "checkpoint.pt").exists() and not hasattr(model, "from_pretrained"):
             raise FileNotFoundError(f"resume_from: no checkpoint.pt at {path}")
         epoch = self.load_checkpoint(model, optimizer, path, scheduler=scheduler)
         return epoch, self._resumed_epoch_complete

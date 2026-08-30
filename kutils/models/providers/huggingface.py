@@ -34,8 +34,7 @@ def load_huggingface(spec: ModelSpec) -> tuple[Any, Any]:
         dtype = getattr(torch, spec.dtype, None)
         if not isinstance(dtype, torch.dtype):
             raise ValueError(
-                f"Unknown dtype {spec.dtype!r} in spec; use a torch dtype name "
-                "such as 'bfloat16'"
+                f"Unknown dtype {spec.dtype!r} in spec; use a torch dtype name such as 'bfloat16'"
             )
         kwargs["torch_dtype"] = dtype
 

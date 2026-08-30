@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         FabricTrainer,
         HubPushCallback,
         StandardRecipe,
+        TaskRecipe,
         TrainingConfig,
     )
 
@@ -39,6 +40,7 @@ __all__ = [
     "RepresentationModel",
     "RepresentationOutput",
     "StandardRecipe",
+    "TaskRecipe",
     "TrainingConfig",
     "bootstrap_ci",
     "build_model",
@@ -59,6 +61,7 @@ _LAZY: dict[str, tuple[str, str]] = {
     "RepresentationModel": ("kutils.models.schemas", "RepresentationModel"),
     "RepresentationOutput": ("kutils.models.schemas", "RepresentationOutput"),
     "StandardRecipe": ("kutils.training", "StandardRecipe"),
+    "TaskRecipe": ("kutils.training", "TaskRecipe"),
     "TrainingConfig": ("kutils.training", "TrainingConfig"),
     "bootstrap_ci": ("kutils.stats", "bootstrap_ci"),
     "build_model": ("kutils.models.factory", "build_model"),

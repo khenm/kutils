@@ -45,8 +45,7 @@ def load_local(spec: ModelSpec) -> tuple[Any, None]:
     architecture = spec.capability.get("architecture")
     if not isinstance(architecture, str) or ":" not in architecture:
         raise ValueError(
-            "provider='local' requires [model.capability] architecture = "
-            "'<module>:<ClassName>'"
+            "provider='local' requires [model.capability] architecture = '<module>:<ClassName>'"
         )
     module_name, _, class_name = architecture.partition(":")
     try:
@@ -55,9 +54,7 @@ def load_local(spec: ModelSpec) -> tuple[Any, None]:
         raise ValueError(f"Could not resolve architecture {architecture!r}: {exc}") from exc
 
     constructor_kwargs = {
-        key: value
-        for key, value in spec.capability.items()
-        if key not in _RESERVED_CAPABILITY_KEYS
+        key: value for key, value in spec.capability.items() if key not in _RESERVED_CAPABILITY_KEYS
     }
     try:
         model = model_cls(**constructor_kwargs)

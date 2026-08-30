@@ -13,8 +13,8 @@ def train_val_test_split(
     the fixed `test_seed` (same examples every run); train/val use the run
     `seed`."""
     n = len(dataset)  # pyright: ignore[reportArgumentType]  # torch Dataset isn't Sized in stubs
-    test_size = max(1, int(n * test_ratio))
-    val_size = max(1, int(n * val_ratio))
+    test_size = max(1, int(n * test_ratio)) if test_ratio > 0 else 0
+    val_size = max(1, int(n * val_ratio)) if val_ratio > 0 else 0
     train_size = n - test_size - val_size
     if train_size <= 0:
         raise ValueError("dataset too small for the requested val/test ratios")

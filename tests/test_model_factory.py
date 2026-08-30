@@ -58,7 +58,6 @@ def test_resolve_family_defaults():
     assert resolve_family(make_spec(family=None, provider="torchvision")) == "cnn"
     assert resolve_family(make_spec(family=None, provider="open_clip")) == "multimodal"
     assert resolve_family(make_spec(family=None, provider="local")) == "custom"
-    assert resolve_family(make_spec(family=None, provider="custom")) == "custom"
     assert (
         resolve_family(make_spec(family=None, provider="huggingface", modality="text"))
         == "text_transformer"

@@ -43,7 +43,7 @@ def test_parse_valid_spec(tmp_path):
 
 
 def test_unknown_key_raises(tmp_path):
-    text = VALID.replace("[model.capability]", 'nope = 1\n\n[model.capability]')
+    text = VALID.replace("[model.capability]", "nope = 1\n\n[model.capability]")
     with pytest.raises(ValueError, match="Unknown model spec key 'nope'"):
         ModelSpec.from_toml(write_spec(tmp_path, text))
 
